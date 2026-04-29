@@ -1,0 +1,5 @@
+com\example\todolist\TaskCategory.class
+com\example\todolist\Task.class
+com\example\todolist\TodolistApplication.class
+com\example\todolist\TaskRepository.class
+com\example\todolist\TodoController.class

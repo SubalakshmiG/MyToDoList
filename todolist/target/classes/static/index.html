@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Todo API</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; color: #333; margin: 0; padding: 2rem; }
+        .container { display: flex; gap: 2rem; max-width: 1200px; margin: 0 auto; }
+        .main-content { flex: 2; }
+        .sidebar { flex: 1; }
+
+        h2 { text-align: center; color: #2c3e50; }
+        .input-group { display: flex; margin-bottom: 1.5rem; gap: 0.5rem; flex-wrap: wrap; }
+        select { padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; background-color: white; }
+        input[type="text"] { flex-grow: 1; padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="date"] { padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px; }
+
+        button { padding: 0.8rem 1.2rem; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #219653; }
+        .task { display: flex; justify-content: space-between; align-items: center; background: white; padding: 1rem; margin-bottom: 0.5rem; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .filter-group { margin-bottom: 1.5rem; text-align: center; }
+        .filter-group button { background: #8e44ad; margin: 0 5px; }
+        .task-text { cursor: pointer; user-select: none; flex-grow: 1;}
+        .completed { text-decoration: line-through; color: #95a5a6; }
+        .btn-delete { background: #e74c3c; padding: 0.4rem 0.8rem; }
+        .btn-delete:hover { background: #c0392b; }
+        .badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 12px; margin-left: 10px; font-weight: bold; text-decoration: none; display: inline-block; }
+        .badge-incomplete { background: #f39c12; color: white; }
+        .badge-completed { background: #27ae60; color: white; }
+        .badge-daily { background: #3498db; color: white; }
+        .badge-monthly { background: #9b59b6; color: white; }
+        .badge-yearly { background: #1abc9c; color: white; }
+
+        /* Calendar Styles */
+        .calendar { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .calendar-header button { background: #3498db; padding: 0.4rem 0.8rem; }
+        .calendar-header button:hover { background: #2980b9; }
+        .calendar-month-year { font-size: 1.2rem; font-weight: bold; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .calendar-day, .calendar-weekday { text-align: center; padding: 0.5rem; }
+        .calendar-weekday { font-weight: bold; color: #7f8c8d; }
+        .calendar-day { cursor: pointer; border-radius: 50%; position: relative; }
+        .calendar-day:not(.empty):hover { background: #ecf0f1; }
+        .calendar-day.today { background: #3498db; color: white; font-weight: bold; }
+        .calendar-day.has-tasks::after { content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background-color: #e74c3c; border-radius: 50%; }
+
+        /* Upcoming Tasks Table Styles */
+        .upcoming-tasks { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 1.5rem; }
+        .upcoming-tasks h3 { margin-top: 0; margin-bottom: 1rem; text-align: center; color: #2c3e50; font-size: 1.1rem; }
+        .upcoming-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .upcoming-table th, .upcoming-table td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #ecf0f1; }
+        .upcoming-table th { background: #f8f9fa; color: #7f8c8d; }
+        .days-urgent { color: #e74c3c; font-weight: bold; }
+        .days-soon { color: #f39c12; font-weight: bold; }
+        .days-good { color: #27ae60; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <h2>🚀 My Todo API</h2>
+    
+            <div class="input-group">
+                <input type="text" id="newTask" placeholder="What needs to be done?">
+                <input type="date" id="newTaskDueDate">
+                <select id="newCategory">
+                    <option value="DAILY_TASK">Daily Task</option>
+                    <option value="MONTH_GOAL">Month Goal</option>
+                    <option value="YEAR_GOAL">Year Goal</option>
+                </select>
+                <button onclick="addTask()">Add Task</button>
+            </div>
+            
+            <div class="filter-group">
+                <button onclick="displayTasks(allTasks)">All</button>
+                <button onclick="filterByCategory('DAILY_TASK')">Daily</button>
+                <button onclick="filterByCategory('MONTH_GOAL')">Monthly</button>
+                <button onclick="filterByCategory('YEAR_GOAL')">Yearly</button>
+            </div>
+
+            <div id="taskList"></div>
+        </div>
+        <div class="sidebar">
+            <div class="calendar">
+                <div class="calendar-header">
+                    <button onclick="prevMonth()">&#9664;</button>
+                    <div class="calendar-month-year" id="monthYear"></div>
+                    <button onclick="nextMonth()">&#9654;</button>
+                </div>
+                <div class="calendar-grid" id="calendar-weekdays"></div>
+                <div class="calendar-grid" id="calendar-days"></div>
+            </div>
+            <div class="upcoming-tasks">
+                <h3>Upcoming Tasks</h3>
+                <table class="upcoming-table">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Time Left</th>
+                        </tr>
+                    </thead>
+                    <tbody id="upcoming-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allTasks = [];
+        let currentDate = new Date();
+
+        // Helper functions to format category text and assign CSS classes
+        function formatCategory(category) {
+            if (!category) return '';
+            return category.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function getCategoryClass(category) {
+            switch(category) {
+                case 'DAILY_TASK': return 'badge-daily';
+                case 'MONTH_GOAL': return 'badge-monthly';
+                case 'YEAR_GOAL': return 'badge-yearly';
+                default: return '';
+            }
+        }
+
+        // Display a filtered list of tasks
+        function displayTasks(tasksToDisplay) {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            
+            tasksToDisplay.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            tasksToDisplay.forEach(task => {
+                const div = document.createElement('div');
+                div.className = 'task';
+                div.innerHTML = `
+                    <div class="task-text ${task.completed ? 'completed' : ''}" onclick="toggleTask(${task.id}, '${task.description}', ${task.completed}, '${task.category}', '${task.dueDate}')">
+                        ${task.description}
+                        <span class="badge ${task.completed ? 'badge-completed' : 'badge-incomplete'}">
+                            ${task.completed ? 'Completed' : 'Incomplete'}
+                        </span>
+                        <span class="badge ${getCategoryClass(task.category)}">
+                            ${formatCategory(task.category)}
+                        </span>
+                        <span style="font-size: 0.8em; color: #7f8c8d; margin-left: 10px;">${task.dueDate || ''}</span>
+                    </div>
+                    <button class="btn-delete" onclick="deleteTask(${task.id})">Delete</button>
+                `;
+                taskList.appendChild(div);
+            });
+        }
+
+        // Filter tasks by category
+        function filterByCategory(category) {
+            const filteredTasks = allTasks.filter(task => task.category === category);
+            displayTasks(filteredTasks);
+        }
+
+        // 1. GET - Fetch all tasks from the server
+        async function loadAllTasks() {
+            const response = await fetch('/api/tasks');
+            allTasks = await response.json();
+            displayTasks(allTasks);
+            renderCalendar();
+            renderUpcomingTasks();
+        }
+
+        // 2. POST - Add a new task
+        async function addTask() {
+            const input = document.getElementById('newTask');
+            const categorySelect = document.getElementById('newCategory');
+            const dueDateInput = document.getElementById('newTaskDueDate');
+            if (!input.value) return;
+            await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    description: input.value, 
+                    completed: false, 
+                    category: categorySelect.value,
+                    dueDate: dueDateInput.value || null 
+                })
+            });
+            input.value = '';
+            dueDateInput.value = '';
+            loadAllTasks();
+        }
+
+        // 3. PUT - Toggle completion status
+        async function toggleTask(id, desc, isCompleted, category, dueDate) {
+            await fetch(`/api/tasks/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                // Pass the category back so it doesn't get erased on update
+                body: JSON.stringify({ description: desc, completed: !isCompleted, category: category, dueDate: dueDate })
+            });
+            loadAllTasks();
+        }
+
+        // 4. DELETE - Remove a task
+        async function deleteTask(id) {
+            await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+            loadAllTasks();
+        }
+
+        // --- Calendar Logic ---
+        function renderCalendar() {
+            currentDate.setDate(1); // Start from the 1st of the month
+            const month = currentDate.getMonth();
+            const year = currentDate.getFullYear();
+
+            document.getElementById('monthYear').innerText = `${currentDate.toLocaleString('default', { month: 'long' })} ${year}`;
+
+            const firstDayIndex = currentDate.getDay();
+            const lastDay = new Date(year, month + 1, 0).getDate();
+            const prevLastDay = new Date(year, month, 0).getDate();
+            const lastDayIndex = new Date(year, month + 1, 0).getDay();
+            const nextDays = 7 - lastDayIndex - 1;
+
+            const daysGrid = document.getElementById('calendar-days');
+            daysGrid.innerHTML = '';
+
+            // Days from previous month
+            for (let x = firstDayIndex; x > 0; x--) {
+                daysGrid.innerHTML += `<div class="calendar-day empty">${prevLastDay - x + 1}</div>`;
+            }
+
+            // Days of current month
+            for (let i = 1; i <= lastDay; i++) {
+                const dayString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const hasTasks = allTasks.some(task => task.dueDate === dayString);
+                const isToday = i === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+
+                daysGrid.innerHTML += `<div class="calendar-day ${isToday ? 'today' : ''} ${hasTasks ? 'has-tasks' : ''}">${i}</div>`;
+            }
+
+            // Days from next month
+            for (let j = 1; j <= nextDays; j++) {
+                daysGrid.innerHTML += `<div class="calendar-day empty">${j}</div>`;
+            }
+        }
+
+        function prevMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        // Render the small table with upcoming tasks
+        function renderUpcomingTasks() {
+            const tbody = document.getElementById('upcoming-tbody');
+            tbody.innerHTML = '';
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalize to the start of the day
+
+            // Get only incomplete tasks that have a due date
+            const upcoming = allTasks.filter(t => !t.completed && t.dueDate);
+            upcoming.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)); // Sort nearest first
+
+            if (upcoming.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#95a5a6;">No upcoming tasks</td></tr>';
+                return;
+            }
+
+            upcoming.forEach(task => {
+                const [year, month, day] = task.dueDate.split('-');
+                const taskDate = new Date(year, month - 1, day);
+                const diffTime = taskDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                let daysText = diffDays < 0 ? `Overdue (${Math.abs(diffDays)}d)` 
+                             : diffDays === 0 ? 'Today' 
+                             : diffDays === 1 ? 'Tomorrow' 
+                             : `${diffDays} days`;
+
+                let cssClass = diffDays <= 0 ? 'days-urgent' : diffDays <= 3 ? 'days-soon' : 'days-good';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${task.description}</td>
+                        <td class="${cssClass}">${daysText}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Initial load
+        document.getElementById('calendar-weekdays').innerHTML = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => `<div class="calendar-weekday">${day}</div>`).join('');
+        document.getElementById('newTaskDueDate').valueAsDate = new Date();
+        loadAllTasks();
+    </script>
+</body>
+</html>
