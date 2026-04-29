@@ -1,11 +1,12 @@
-# Use an official Java 17 runtime as a parent image
-FROM eclipse-temurin:17-jdk-alpine
-
-# Set the working directory in the container
+# Stage 1: Build the application using Maven
+FROM maven:3.9-eclipse-temurin-17-alpine AS builder
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy the packaged executable JAR file into the container
-COPY target/*.jar app.jar
-
-# Command to execute the application when the container starts
+# Stage 2: Run the application
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
