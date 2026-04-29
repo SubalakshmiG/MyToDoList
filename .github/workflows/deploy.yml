@@ -1,6 +1,6 @@
 name: Build and Publish Docker Container
 
-on: # <-- Required
+on:
   push:
     branches: [ "main" ]
 
@@ -10,13 +10,12 @@ env:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-    
     # Give GitHub Actions permission to write to the Packages registry
     permissions:
       contents: read
       packages: write
 
-    steps: # <-- Required
+    steps:
     - name: Checkout code
       uses: actions/checkout@v4
     
@@ -25,12 +24,24 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: maven # <-- Belongs here
-        
-    - name: Grant execute permission for mvnw
-      run: |
-        sed -i 's/\r$//' mvnw
-        chmod +x mvnw
+        cache: maven
         
     - name: Build with Maven
-      run: ./mvnw clean package -DskipTests
+      run: mvn clean package -DskipTests
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Lowercase GitHub Repository Name (Docker tags must be lowercase)
+      run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ghcr.io/${{ env.REPO_LC }}:latest
