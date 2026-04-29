@@ -1,0 +1,18 @@
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+        cache: maven
+        
+    - name: Grant execute permission for mvnw
+      run: |
+        sed -i 's/\r$//' mvnw
+        chmod +x mvnw
+        
+    - name: Build with Maven (Creates the JAR file)
+      run: ./mvnw clean package -DskipTests
