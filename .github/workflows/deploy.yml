@@ -4,6 +4,9 @@ on:
   push:
     branches: [ "main" ]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
@@ -24,7 +27,9 @@ jobs:
         cache: maven
         
     - name: Grant execute permission for mvnw
-      run: chmod +x mvnw
+      run: |
+        sed -i 's/\r$//' mvnw
+        chmod +x mvnw
         
     - name: Build with Maven
       run: ./mvnw clean package -DskipTests
