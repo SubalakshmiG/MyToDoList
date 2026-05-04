@@ -19,17 +19,20 @@ public class Task {
     private boolean completed;
     private LocalDate dueDate;
 
+    private String userId; // Links the task to a specific user
+
     @Enumerated(EnumType.STRING)
     private TaskCategory category;
 
     public Task() {
     }
 
-    public Task(long id, String description, TaskCategory category, LocalDate dueDate) {
+    public Task(long id, String description, TaskCategory category, LocalDate dueDate, String userId) {
         this.description = description;
         this.completed = false; // Tasks are not completed by default
         this.category = category;
         this.dueDate = dueDate;
+        this.userId = userId;
     }
 
     // Getters and Setters are needed for the framework to access the properties.
@@ -71,5 +74,13 @@ public class Task {
 
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }
