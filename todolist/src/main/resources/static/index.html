@@ -55,14 +55,35 @@
         .days-urgent { color: #e74c3c; font-weight: bold; }
         .days-soon { color: #f39c12; font-weight: bold; }
         .days-good { color: #27ae60; }
+
+        /* Auth Overlay Styles */
+        .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .auth-box { background: white; padding: 2rem; border-radius: 8px; width: 320px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .auth-box h2 { margin-top: 0; margin-bottom: 1.5rem; }
+        .auth-box input { width: 100%; margin-bottom: 1rem; padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .auth-box button { width: 100%; margin-bottom: 1rem; background: #3498db; }
+        .auth-box button:hover { background: #2980b9; }
+        .auth-toggle { color: #8e44ad; cursor: pointer; font-size: 0.9rem; text-decoration: underline; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-box">
+            <h2 id="authTitle">Login</h2>
+            <input type="text" id="authUsername" placeholder="Username">
+            <input type="password" id="authPassword" placeholder="Password">
+            <button id="authBtn" onclick="performAuth()">Login</button>
+            <p id="authError" style="color: red; font-size: 0.85rem; margin-top: 0; margin-bottom: 1rem;"></p>
+            <span class="auth-toggle" onclick="toggleAuthMode()" id="authToggleText">Need an account? Sign up</span>
+        </div>
+    </div>
+
     <div class="container">
         <div class="main-content">
             <div style="margin-bottom: 1rem; text-align: right;">
-                <label for="usernameInput" style="font-weight: bold; margin-right: 0.5rem;">👤 Current User:</label>
-                <input type="text" id="usernameInput" value="system-admin" onchange="loadAllTasks()" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <span style="font-weight: bold; margin-right: 1rem;">👤 Logged in as: <span id="loggedInUser"></span></span>
+                <button onclick="logout()" style="background: #e74c3c; padding: 0.4rem 0.8rem; margin: 0;">Logout</button>
             </div>
 
             <h2>🚀 My Todo API</h2>
@@ -117,6 +138,62 @@
         let allTasks = [];
         let currentDate = new Date();
 
+        let currentUser = null;
+        let isLoginMode = true;
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').innerText = isLoginMode ? 'Login' : 'Sign Up';
+            document.getElementById('authBtn').innerText = isLoginMode ? 'Login' : 'Sign Up';
+            document.getElementById('authToggleText').innerText = isLoginMode ? 'Need an account? Sign up' : 'Already have an account? Login';
+            document.getElementById('authError').innerText = '';
+        }
+
+        async function performAuth() {
+            const user = document.getElementById('authUsername').value;
+            const pass = document.getElementById('authPassword').value;
+            if (!user || !pass) {
+                document.getElementById('authError').style.color = 'red';
+                document.getElementById('authError').innerText = 'Please enter both username and password';
+                return;
+            }
+
+            const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/signup';
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, password: pass })
+            });
+
+            if (response.ok) {
+                if (!isLoginMode) {
+                    document.getElementById('authError').style.color = 'green';
+                    document.getElementById('authError').innerText = 'Signup successful! Please login.';
+                    toggleAuthMode();
+                } else {
+                    currentUser = user;
+                    document.getElementById('authOverlay').classList.add('hidden');
+                    document.getElementById('loggedInUser').innerText = currentUser;
+                    document.getElementById('authUsername').value = '';
+                    document.getElementById('authPassword').value = '';
+                    loadAllTasks();
+                }
+            } else {
+                const errorText = await response.text();
+                document.getElementById('authError').style.color = 'red';
+                document.getElementById('authError').innerText = errorText || 'Authentication failed';
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            allTasks = [];
+            displayTasks([]);
+            document.getElementById('authOverlay').classList.remove('hidden');
+            document.getElementById('calendar-days').innerHTML = '';
+            document.getElementById('upcoming-tbody').innerHTML = '';
+        }
+
         // Helper functions to format category text and assign CSS classes
         function formatCategory(category) {
             if (!category) return '';
@@ -167,10 +244,9 @@
 
         // Helper function to get the current user header
         function getHeaders() {
-            const userId = document.getElementById('usernameInput').value || 'guest';
             return {
                 'Content-Type': 'application/json',
-                'X-User-Id': userId
+                'X-User-Id': currentUser || 'guest'
             };
         }
 
@@ -313,7 +389,6 @@
         // Initial load
         document.getElementById('calendar-weekdays').innerHTML = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => `<div class="calendar-weekday">${day}</div>`).join('');
         document.getElementById('newTaskDueDate').valueAsDate = new Date();
-        loadAllTasks();
     </script>
 </body>
 </html>
