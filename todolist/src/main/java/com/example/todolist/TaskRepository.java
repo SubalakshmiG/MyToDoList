@@ -10,4 +10,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // By defining this method, Spring will automatically create a query
     // to "find all Tasks where the category matches the one provided".
     List<Task> findByCategory(TaskCategory category);
+
+    List<Task> findByUserId(String userId);
+    List<Task> findByUserIdAndCategory(String userId, TaskCategory category);
 }
