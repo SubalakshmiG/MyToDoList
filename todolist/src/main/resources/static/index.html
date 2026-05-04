@@ -6,9 +6,9 @@
     <title>My Todo API</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; color: #333; margin: 0; padding: 2rem; }
-        .container { display: flex; gap: 2rem; max-width: 1200px; margin: 0 auto; }
-        .main-content { flex: 2; }
-        .sidebar { flex: 1; }
+        .container { display: flex; gap: 2rem; max-width: 1200px; margin: 0 auto; flex-wrap: wrap; }
+        .main-content { flex: 2; min-width: 300px; }
+        .sidebar { flex: 1; min-width: 320px; }
 
         h2 { text-align: center; color: #2c3e50; }
         .input-group { display: flex; margin-bottom: 1.5rem; gap: 0.5rem; flex-wrap: wrap; }
@@ -60,6 +60,11 @@
 <body>
     <div class="container">
         <div class="main-content">
+            <div style="margin-bottom: 1rem; text-align: right;">
+                <label for="usernameInput" style="font-weight: bold; margin-right: 0.5rem;">👤 Current User:</label>
+                <input type="text" id="usernameInput" value="system-admin" onchange="loadAllTasks()" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
             <h2>🚀 My Todo API</h2>
     
             <div class="input-group">
@@ -160,9 +165,18 @@
             displayTasks(filteredTasks);
         }
 
+        // Helper function to get the current user header
+        function getHeaders() {
+            const userId = document.getElementById('usernameInput').value || 'guest';
+            return {
+                'Content-Type': 'application/json',
+                'X-User-Id': userId
+            };
+        }
+
         // 1. GET - Fetch all tasks from the server
         async function loadAllTasks() {
-            const response = await fetch('/api/tasks');
+            const response = await fetch('/api/tasks', { headers: getHeaders() });
             allTasks = await response.json();
             displayTasks(allTasks);
             renderCalendar();
@@ -177,7 +191,7 @@
             if (!input.value) return;
             await fetch('/api/tasks', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getHeaders(),
                 body: JSON.stringify({ 
                     description: input.value, 
                     completed: false, 
@@ -194,7 +208,7 @@
         async function toggleTask(id, desc, isCompleted, category, dueDate) {
             await fetch(`/api/tasks/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getHeaders(),
                 // Pass the category back so it doesn't get erased on update
                 body: JSON.stringify({ description: desc, completed: !isCompleted, category: category, dueDate: dueDate })
             });
@@ -203,7 +217,10 @@
 
         // 4. DELETE - Remove a task
         async function deleteTask(id) {
-            await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+            await fetch(`/api/tasks/${id}`, { 
+                method: 'DELETE',
+                headers: getHeaders()
+            });
             loadAllTasks();
         }
 
