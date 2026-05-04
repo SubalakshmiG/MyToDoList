@@ -16,8 +16,13 @@ public class TodolistApplication {
 
 	// This bean runs automatically when the application starts
 	@Bean
-	public CommandLineRunner loadData(TaskRepository repository) {
+	public CommandLineRunner loadData(TaskRepository repository, UserRepository userRepository) {
 		return (args) -> {
+			// Create default user if it doesn't exist
+			if (userRepository.findByUsername("system-admin").isEmpty()) {
+				userRepository.save(new User("system-admin", "admin123"));
+			}
+
 			// Add default tasks to the database so it isn't completely empty!
 			repository.save(new Task(0L, "Build a dynamic UI frontend", TaskCategory.DAILY_TASK, LocalDate.now(), "system-admin"));
 			repository.save(new Task(0L, "Add calendar feature", TaskCategory.DAILY_TASK, LocalDate.now().plusDays(1), "system-admin"));
