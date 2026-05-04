@@ -19,10 +19,10 @@ public class TodolistApplication {
 	public CommandLineRunner loadData(TaskRepository repository) {
 		return (args) -> {
 			// Add default tasks to the database so it isn't completely empty!
-			repository.save(new Task(0L, "Build a dynamic UI frontend", TaskCategory.DAILY_TASK, LocalDate.now()));
-			repository.save(new Task(0L, "Add calendar feature", TaskCategory.DAILY_TASK, LocalDate.now().plusDays(1)));
-			repository.save(new Task(0L, "Master Spring Boot", TaskCategory.MONTH_GOAL, LocalDate.now().plusMonths(1)));
-			repository.save(new Task(0L, "Get hired as a Java Developer!", TaskCategory.YEAR_GOAL, LocalDate.now().plusYears(1)));
+			repository.save(new Task(0L, "Build a dynamic UI frontend", TaskCategory.DAILY_TASK, LocalDate.now(), "system-admin"));
+			repository.save(new Task(0L, "Add calendar feature", TaskCategory.DAILY_TASK, LocalDate.now().plusDays(1), "system-admin"));
+			repository.save(new Task(0L, "Master Spring Boot", TaskCategory.MONTH_GOAL, LocalDate.now().plusMonths(1), "system-admin"));
+			repository.save(new Task(0L, "Get hired as a Java Developer!", TaskCategory.YEAR_GOAL, LocalDate.now().plusYears(1), "system-admin"));
 		};
 	}
 }
