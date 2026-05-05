@@ -167,8 +167,11 @@
 
             if (response.ok) {
                 if (!isLoginMode) {
-                    document.getElementById('authError').style.color = 'green';
-                    document.getElementById('authError').innerText = 'Signup successful! Please login.';
+                    // 1. Show the popup message
+                    alert('Signup successful! Please login with your new credentials.');
+                    // 2. Clear the input placeholders so they are empty for login
+                    document.getElementById('authUsername').value = '';
+                    document.getElementById('authPassword').value = '';
                     toggleAuthMode();
                 } else {
                     currentUser = user;
