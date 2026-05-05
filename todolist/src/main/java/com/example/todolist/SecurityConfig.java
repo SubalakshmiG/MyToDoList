@@ -33,7 +33,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/health", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll() // Leave public endpoints and docs unprotected
+                .requestMatchers("/", "/index.html", "/api/auth/**", "/health", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll() // Leave public endpoints, docs, and frontend unprotected
                 .anyRequest().authenticated()) // All other requests require a valid JWT token
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
